@@ -1,6 +1,6 @@
 use aoclib::parse;
 use parse_display::{Display, FromStr};
-use std::{cmp::Ordering, path::Path};
+use std::path::Path;
 
 /// Input column 1
 #[derive(Debug, Clone, Copy, PartialEq, Eq, FromStr, Display)]
@@ -30,27 +30,6 @@ enum Rps {
     Rock,
     Paper,
     Scissors,
-}
-
-// Crimes! Rps does not have a total order; it is not transitive.
-// Don't try to sort a `Vec<Rps>`!
-impl Ord for Rps {
-    fn cmp(&self, other: &Self) -> Ordering {
-        if self == other {
-            Ordering::Equal
-        } else if self.beats() == *other {
-            Ordering::Greater
-        } else {
-            debug_assert_eq!(self.loses_against(), *other);
-            Ordering::Less
-        }
-    }
-}
-
-impl PartialOrd for Rps {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
-    }
 }
 
 impl From<OpponentSigil> for Rps {
@@ -134,10 +113,13 @@ impl Round {
     }
 
     fn outcome_score(self) -> u32 {
-        match self.me.cmp(&self.opponent) {
-            Ordering::Less => 0,
-            Ordering::Equal => 3,
-            Ordering::Greater => 6,
+        if self.me.beats() == self.opponent {
+            6
+        } else if self.me.loses_against() == self.opponent {
+            0
+        } else {
+            debug_assert_eq!(self.me, self.opponent);
+            3
         }
     }
 
