@@ -1,5 +1,5 @@
 use aoclib::parse;
-use std::path::Path;
+use std::{path::Path, str::FromStr};
 
 fn priority_of(value: char) -> Result<u8, Error> {
     if ('a'..='z').contains(&value) {
@@ -20,6 +20,19 @@ impl Default for Priorities {
     }
 }
 
+impl FromStr for Priorities {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut p = Self::default();
+        for ch in s.chars() {
+            let priority = priority_of(ch)?;
+            p.insert(priority);
+        }
+        Ok(p)
+    }
+}
+
 impl Priorities {
     fn insert(&mut self, priority: u8) {
         self.0[priority as usize] += 1;
@@ -36,38 +49,27 @@ impl Priorities {
     }
 }
 
-fn parse_to_priorities(s: impl AsRef<str>) -> Result<(Priorities, Priorities), Error> {
-    let s = s.as_ref();
+fn halve_string(mut s: String) -> Result<(String, String), Error> {
     let total = s.chars().count();
-    let side_size = total / 2;
-    if side_size * 2 != total {
+    let half = total / 2;
+    if half * 2 != total {
         return Err(Error::OddNumber);
     }
-
-    let mut left = Priorities::default();
-    let mut right = Priorities::default();
-
-    for (idx, ch) in s.chars().enumerate() {
-        let priority = priority_of(ch)?;
-        if idx < side_size {
-            left.insert(priority);
-        } else {
-            right.insert(priority);
-        }
-    }
-    debug_assert_eq!(
-        left.0.iter().map(|x| *x as u32).sum::<u32>(),
-        right.0.iter().map(|x| *x as u32).sum::<u32>(),
-        "must have same number of items in both sides of rucksack"
-    );
-
-    Ok((left, right))
+    let split_point = s
+        .char_indices()
+        .nth(half)
+        .expect("taking the next char at the half point doesn't exhaust the string")
+        .0;
+    let right = s.split_off(split_point);
+    Ok((s, right))
 }
 
 pub fn part1(input: &Path) -> Result<(), Error> {
     let mut mutual_priority_sum = 0;
     for rucksack_contents in parse::<String>(input)? {
-        let (left, right) = parse_to_priorities(rucksack_contents)?;
+        let (left, right) = halve_string(rucksack_contents)?;
+        let left: Priorities = left.parse()?;
+        let right: Priorities = right.parse()?;
         let intersection = left.as_flags() & right.as_flags();
         for idx in 0..(u64::BITS) {
             if intersection & (1 << idx) != 0 {
