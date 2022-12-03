@@ -12,8 +12,16 @@ fn priority_of(value: char) -> Result<u8, Error> {
     }
 }
 
-// we waste slot 0, which is always 0, so that we don't have to deal so much with
-// off-by-1 errors; each priority is always the same as an index in the array.
+// Notes in this implementation:
+//
+// We could simplify things by going immediately to a bitmask instead of keeping a (fairly large)
+// count of items. We choose not to do this because of the heuristic that in general we want to
+// parse AoC inputs into some form which allows us to reconstruct the entire input. As inputs
+// can contain multiple instances of items, we keep the count. While it turned out that part 2
+// didn't need us to use the counts this time, the heuristic is still valuable.
+//
+// Priorities are 1-indexed, and we want to sum them often. To keep the downstream implementation simple,
+// we waste 32 bits of space for slot 0, and then work directly on the priority set.
 #[derive(Clone, Copy, PartialEq, Eq)]
 struct Priorities([u32; 53]);
 
@@ -52,6 +60,9 @@ impl Priorities {
     }
 }
 
+// This is unicode-safe. We could operate on the implicit rule that AoC input is always ASCII,
+// and performance would increase, but it's more fun to work in a way which supports more
+// challenging inputs.
 fn halve_string(mut s: String) -> Result<(String, String), Error> {
     let total = s.chars().count();
     let half = total / 2;
