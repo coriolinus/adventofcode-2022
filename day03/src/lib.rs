@@ -1,4 +1,5 @@
 use aoclib::parse;
+use itertools::Itertools;
 use std::{path::Path, str::FromStr};
 
 fn priority_of(value: char) -> Result<u8, Error> {
@@ -11,6 +12,8 @@ fn priority_of(value: char) -> Result<u8, Error> {
     }
 }
 
+// we waste slot 0, which is always 0, so that we don't have to deal so much with
+// off-by-1 errors; each priority is always the same as an index in the array.
 #[derive(Clone, Copy, PartialEq, Eq)]
 struct Priorities([u32; 53]);
 
@@ -64,6 +67,21 @@ fn halve_string(mut s: String) -> Result<(String, String), Error> {
     Ok((s, right))
 }
 
+fn find_badge(group: &[Priorities]) -> Result<u8, Error> {
+    let common_items = group
+        .iter()
+        .fold(!0, |accumulator, item| accumulator & item.as_flags());
+    if common_items.count_ones() != 1 {
+        return Err(Error::WrongCountCommonItems(common_items.count_ones()));
+    }
+    for idx in 0..(u64::BITS) {
+        if common_items & (1 << idx) != 0 {
+            return Ok(idx as u8);
+        }
+    }
+    unreachable!("we can exhaustively search a u64");
+}
+
 pub fn part1(input: &Path) -> Result<(), Error> {
     let mut mutual_priority_sum = 0;
     for rucksack_contents in parse::<String>(input)? {
@@ -82,7 +100,15 @@ pub fn part1(input: &Path) -> Result<(), Error> {
 }
 
 pub fn part2(input: &Path) -> Result<(), Error> {
-    unimplemented!("input file: {:?}", input)
+    let mut badge_sum = 0;
+    for chunk in parse::<String>(input)?.chunks(3).into_iter() {
+        let (left, mid, right) = chunk.collect_tuple().ok_or(Error::IncompleteGroup)?;
+        let priorities = [left.parse::<Priorities>()?, mid.parse()?, right.parse()?];
+        let badge = find_badge(&priorities)?;
+        badge_sum += badge as u32;
+    }
+    println!("sum of priorities of group badges: {badge_sum}");
+    Ok(())
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -95,4 +121,8 @@ pub enum Error {
     MalformedPriority(char),
     #[error("odd number of items in rucksack")]
     OddNumber,
+    #[error("incomplete group")]
+    IncompleteGroup,
+    #[error("expected 1 common item; got {0}")]
+    WrongCountCommonItems(u32),
 }
