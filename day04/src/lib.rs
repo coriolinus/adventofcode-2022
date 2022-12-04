@@ -13,6 +13,10 @@ impl Assignment {
     fn fully_contains(&self, other: &Self) -> bool {
         self.low <= other.low && self.high >= other.high
     }
+
+    fn overlaps_low(&self, other: &Self) -> bool {
+        self.low <= other.low && self.high >= other.low
+    }
 }
 
 #[derive(Debug, Clone, Copy, FromStr, Display)]
@@ -33,7 +37,11 @@ pub fn part1(input: &Path) -> Result<(), Error> {
 }
 
 pub fn part2(input: &Path) -> Result<(), Error> {
-    unimplemented!("input file: {:?}", input)
+    let overlaps = parse::<Pair>(input)?
+        .filter(|pair| pair.left.overlaps_low(&pair.right) || pair.right.overlaps_low(&pair.left))
+        .count();
+    println!("overlaps: {overlaps}");
+    Ok(())
 }
 
 #[derive(Debug, thiserror::Error)]
