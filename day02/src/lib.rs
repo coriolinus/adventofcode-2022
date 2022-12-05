@@ -129,9 +129,7 @@ impl Round {
 }
 
 pub fn part1(input: &Path) -> Result<(), Error> {
-    let instructions: Vec<Instruction> = parse(input)?.collect();
-    let total_score: u32 = instructions
-        .into_iter()
+    let total_score: u32 = parse(input)?
         .map(|instruction| {
             let round = Round::from_instruction_pt1(instruction);
             round.score()
@@ -142,9 +140,7 @@ pub fn part1(input: &Path) -> Result<(), Error> {
 }
 
 pub fn part2(input: &Path) -> Result<(), Error> {
-    let instructions: Vec<Instruction> = parse(input)?.collect();
-    let total_score: u32 = instructions
-        .into_iter()
+    let total_score: u32 = parse(input)?
         .map(|instruction| {
             let round = Round::from_instruction_pt2(instruction);
             round.score()
