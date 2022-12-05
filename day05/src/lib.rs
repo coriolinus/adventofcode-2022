@@ -91,22 +91,45 @@ pub fn part1(input: &Path) -> Result<(), Error> {
     let (mut stacks, movements) = parse(input)?;
 
     for (movement_idx, movement) in movements.iter().enumerate() {
+        let origin = movement.origin - 1; // movements are 1-indexed
+        let destination = movement.destination - 1; // movements are 1-indexed
+
         for _ in 0..movement.qty {
-            let origin = movement.origin - 1; // movements are 1-indexed
-            let destination = movement.destination - 1; // movements are 1-indexed
             let top = stacks.0[origin]
                 .pop()
-                .ok_or(Error::StackUnderflow(movement_idx, origin))?;
+                .ok_or(Error::StackUnderflow(movement_idx, movement.origin))?;
             stacks.0[destination].push(top);
         }
     }
 
-    println!("stack tops: {}", stacks.tops());
+    println!("stack tops (pt. 1): {}", stacks.tops());
     Ok(())
 }
 
 pub fn part2(input: &Path) -> Result<(), Error> {
-    unimplemented!("input file: {:?}", input)
+    let (mut stacks, movements) = parse(input)?;
+    let mut scratch_space = Vec::<u8>::new();
+
+    for (movement_idx, movement) in movements.iter().enumerate() {
+        let origin = movement.origin - 1; // movements are 1-indexed
+        let destination = movement.destination - 1; // movements are 1-indexed
+
+        if stacks.0[origin].len() < movement.qty {
+            return Err(Error::StackUnderflow(movement_idx, movement.origin));
+        }
+
+        let from_idx = stacks.0[origin].len() - movement.qty;
+        // We need to use the scratch space as a temporary here so that we don't
+        // borrow `stacks` both mutably and immutably. Such a borrow would be
+        // legitimate: we'd be deconflicting based on the distinct `origin` and
+        // `destination` indices, but we can't easily prove that to the compiler
+        // right now. An extra copy shouldn't be too expensive, hopefully.
+        scratch_space.extend(stacks.0[origin].drain(from_idx..));
+        stacks.0[destination].append(&mut scratch_space);
+    }
+
+    println!("stack tops (pt. 2): {}", stacks.tops());
+    Ok(())
 }
 
 #[derive(Debug, thiserror::Error)]
