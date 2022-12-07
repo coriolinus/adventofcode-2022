@@ -251,28 +251,27 @@ pub fn part1(input: &Path) -> Result<(), Error> {
 pub fn part2(input: &Path) -> Result<(), Error> {
     let fs: Filesystem = parse(input)?.collect();
 
-    let total_disk_space = 70_000_000;
+    let total_disk_space: u64 = 70_000_000;
     let need_unused_space: u64 = 30_000_000;
     let used_space = fs.root.size(&fs);
-    let unused_space = total_disk_space - used_space;
-    let need_to_clear = need_unused_space.checked_sub(unused_space);
+    let Some(unused_space) = total_disk_space.checked_sub(used_space) else {
+        println!("pt. 2: used space is greater than total disk space!?");
+        return Ok(());
+    };
+    let Some(need_to_clear) = need_unused_space.checked_sub(unused_space) else {
+        println!("pt. 2: don't need to clear any directories");
+        return Ok(());
+    };
 
-    match need_to_clear {
-        None => println!("pt. 2: don't need to clear any directories"),
-        Some(need_to_clear) => {
-            let smallest_deleteable_directory = fs
-                .iter()
-                .filter_map(|node| node.as_dir())
-                .filter(|dir| dir.size(&fs) >= need_to_clear)
-                .min_by_key(|dir| dir.size(&fs))
-                .expect(
-                    "at least one directory is big enough that deleting it clears enough space",
-                );
-            let path = smallest_deleteable_directory.metadata.path(&fs);
-            let size = smallest_deleteable_directory.size(&fs);
-            println!("pt. 2: deleting {path} clearing {size}");
-        }
-    }
+    let smallest_deleteable_directory = fs
+        .iter()
+        .filter_map(|node| node.as_dir())
+        .filter(|dir| dir.size(&fs) >= need_to_clear)
+        .min_by_key(|dir| dir.size(&fs))
+        .expect("at least one directory is big enough that deleting it clears enough space");
+    let path = smallest_deleteable_directory.metadata.path(&fs);
+    let size = smallest_deleteable_directory.size(&fs);
+    println!("pt. 2: deleting {path} clearing {size}");
 
     Ok(())
 }
