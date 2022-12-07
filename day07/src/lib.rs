@@ -6,7 +6,7 @@ use std::{
     path::Path,
 };
 
-#[derive(Default, Debug, Clone, Copy)]
+#[derive(Default, Debug, Clone, Copy, derive_more::From)]
 enum Inode {
     #[default]
     Uninitialized,
@@ -17,12 +17,6 @@ enum Inode {
 impl Inode {
     fn exists(&self) -> bool {
         !matches!(self, Inode::Uninitialized)
-    }
-}
-
-impl From<usize> for Inode {
-    fn from(idx: usize) -> Self {
-        Self::Idx(idx)
     }
 }
 
@@ -76,21 +70,10 @@ enum Line {
 }
 
 /// A filesystem node
+#[derive(Debug, Clone, derive_more::From)]
 enum Node {
     Dir(Dir),
     File(File),
-}
-
-impl From<Dir> for Node {
-    fn from(dir: Dir) -> Self {
-        Self::Dir(dir)
-    }
-}
-
-impl From<File> for Node {
-    fn from(file: File) -> Self {
-        Self::File(file)
-    }
 }
 
 impl Node {
