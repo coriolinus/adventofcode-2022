@@ -14,6 +14,12 @@ enum Inode {
     Idx(usize),
 }
 
+impl Inode {
+    fn exists(&self) -> bool {
+        !matches!(self, Inode::Uninitialized)
+    }
+}
+
 impl From<usize> for Inode {
     fn from(idx: usize) -> Self {
         Self::Idx(idx)
@@ -108,6 +114,13 @@ impl Node {
         match self {
             Node::Dir(dir) => dir.size(fs),
             Node::File(file) => file.size,
+        }
+    }
+
+    fn metadata(&self) -> &Metadata {
+        match self {
+            Node::Dir(dir) => &dir.metadata,
+            Node::File(file) => &file.metadata,
         }
     }
 }
@@ -237,7 +250,42 @@ pub fn part1(input: &Path) -> Result<(), Error> {
 }
 
 pub fn part2(input: &Path) -> Result<(), Error> {
-    unimplemented!("input file: {:?}", input)
+    let fs: Filesystem = parse(input)?.collect();
+
+    let total_disk_space = 70_000_000;
+    let need_unused_space: u64 = 30_000_000;
+    let used_space = fs.root.size(&fs);
+    let unused_space = total_disk_space - used_space;
+    let need_to_clear = need_unused_space.checked_sub(unused_space);
+
+    match need_to_clear {
+        None => println!("pt. 2: don't need to clear any directories"),
+        Some(need_to_clear) => {
+            let smallest_deleteable_directory = fs
+                .iter()
+                .filter_map(|node| node.as_dir())
+                .filter(|dir| dir.size(&fs) >= need_to_clear)
+                .min_by_key(|dir| dir.size(&fs))
+                .expect(
+                    "at least one directory is big enough that deleting it clears enough space",
+                );
+            let path = {
+                let mut path = Vec::new();
+                let mut current_dir = smallest_deleteable_directory.metadata.inode;
+                while current_dir.exists() {
+                    let metadata = fs[current_dir].metadata();
+                    path.push(metadata.name.as_str());
+                    current_dir = metadata.parent;
+                }
+                path.reverse();
+                path.join("/")
+            };
+            let size = smallest_deleteable_directory.size(&fs);
+            println!("pt. 2: deleting {path} clearing {size}");
+        }
+    }
+
+    Ok(())
 }
 
 #[derive(Debug, thiserror::Error)]
