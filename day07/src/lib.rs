@@ -150,43 +150,45 @@ impl FromIterator<Line> for Filesystem {
         let mut fs = Filesystem::with_capacity(min);
         let mut current_dir = Inode::default();
 
+        // the following are macros instead of functions because closures
+        // would capture `fs` in conflicting ways.
+
+        /// current directory: &Dir
+        macro_rules! current_dir {
+            () => {
+                fs[current_dir].as_dir().expect("current dir is always dir")
+            };
+        }
+
+        /// current directory: &mut Dir
+        macro_rules! current_dir_mut {
+            () => {
+                fs[current_dir]
+                    .as_dir_mut()
+                    .expect("current dir is always dir")
+            };
+        }
+
+        /// set up a node
+        macro_rules! setup_node {
+            ($id:ident) => {{
+                $id.metadata.parent = current_dir;
+                let inode = fs.arena.len().into();
+                $id.metadata.inode = inode;
+                fs.arena.push($id.into());
+                current_dir_mut!().children.push(inode);
+            }};
+        }
+
         for line in iter {
             match line {
-                Line::Dir(mut dir) => {
-                    dir.metadata.parent = current_dir;
-                    let inode = fs.arena.len().into();
-                    dir.metadata.inode = inode;
-                    fs.arena.push(dir.into());
-                    fs[current_dir]
-                        .as_dir_mut()
-                        .expect("current dir is always dir")
-                        .children
-                        .push(inode);
-                }
-                Line::File(mut file) => {
-                    file.metadata.parent = current_dir;
-                    let inode = fs.arena.len().into();
-                    file.metadata.inode = inode;
-                    fs.arena.push(file.into());
-                    fs[current_dir]
-                        .as_dir_mut()
-                        .expect("current dir is always dir")
-                        .children
-                        .push(inode);
-                }
+                Line::Dir(mut dir) => setup_node!(dir),
+                Line::File(mut file) => setup_node!(file),
                 Line::Cd(rel_path) => {
                     current_dir = match rel_path.as_str() {
                         "/" => Inode::Root,
-                        ".." => {
-                            fs[current_dir]
-                                .as_dir()
-                                .expect("current dir is always dir")
-                                .metadata
-                                .parent
-                        }
-                        child_name => fs[current_dir]
-                            .as_dir()
-                            .expect("current dir is always dir")
+                        ".." => current_dir!().metadata.parent,
+                        child_name => current_dir!()
                             .children
                             .iter()
                             .copied()
