@@ -27,6 +27,20 @@ struct Metadata {
     parent: Inode,
 }
 
+impl Metadata {
+    fn path(&self, fs: &Filesystem) -> String {
+        let mut path = Vec::new();
+        let mut inode = self.inode;
+        while inode.exists() {
+            let metadata = fs[inode].metadata();
+            path.push(metadata.name.as_str());
+            inode = metadata.parent;
+        }
+        path.reverse();
+        path.join("/")
+    }
+}
+
 #[derive(Default, Debug, Clone, FromStr, Display)]
 #[display("dir {metadata.name}")]
 #[from_str(default)]
@@ -254,17 +268,7 @@ pub fn part2(input: &Path) -> Result<(), Error> {
                 .expect(
                     "at least one directory is big enough that deleting it clears enough space",
                 );
-            let path = {
-                let mut path = Vec::new();
-                let mut current_dir = smallest_deleteable_directory.metadata.inode;
-                while current_dir.exists() {
-                    let metadata = fs[current_dir].metadata();
-                    path.push(metadata.name.as_str());
-                    current_dir = metadata.parent;
-                }
-                path.reverse();
-                path.join("/")
-            };
+            let path = smallest_deleteable_directory.metadata.path(&fs);
             let size = smallest_deleteable_directory.size(&fs);
             println!("pt. 2: deleting {path} clearing {size}");
         }
