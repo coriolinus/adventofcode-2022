@@ -7,10 +7,9 @@ const MESSAGE_SIZE: usize = 14;
 fn find_start(data: &[u8], size: usize) -> Result<usize, Error> {
     // we could have used a more complicated counting array to keep track of the
     // state, but mapping to bitflags is working quite well enough.
-    let (window_idx, _window) = data
+    let window_idx = data
         .windows(size)
-        .enumerate()
-        .find(|(_idx, window)| {
+        .position(|window| {
             window
                 .iter()
                 .fold(0_u128, |acc, byte| acc | 1 << byte)
