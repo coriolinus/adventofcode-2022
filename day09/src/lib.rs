@@ -38,47 +38,72 @@ struct Instruction {
 
 #[derive(Default, Debug)]
 struct Rope {
-    head: Point,
-    tail: Point,
+    knots: Vec<Point>,
 }
 
 impl Rope {
+    fn new(num_knots: usize) -> Self {
+        Self {
+            knots: vec![Point::default(); num_knots],
+        }
+    }
+
+    fn tail(&self) -> Point {
+        self.knots.last().copied().unwrap_or_default()
+    }
+
     /// `true` when `head` and `tail` are overlapping or within space constraints
-    fn obeys_touching_rule(&self) -> bool {
-        let diff = self.head - self.tail;
+    fn obeys_touching_rule(head: Point, tail: Point) -> bool {
+        let diff = head - tail;
         (-1..=1).contains(&diff.x) && (-1..=1).contains(&diff.y)
     }
 
     fn step(&mut self, direction: Direction) {
-        self.head += direction;
-        if !self.obeys_touching_rule() {
-            let diff = self.head - self.tail;
-            let dx = diff.x.clamp(-1, 1);
-            let dy = diff.y.clamp(-1, 1);
-            self.tail += (dx, dy);
+        if self.knots.is_empty() {
+            return;
         }
-        debug_assert!(self.obeys_touching_rule());
+
+        self.knots[0] += direction;
+
+        for tail_idx in 1..self.knots.len() {
+            let head_idx = tail_idx - 1;
+            let head = self.knots[head_idx];
+            let tail = self.knots[tail_idx];
+
+            if !Self::obeys_touching_rule(head, tail) {
+                let diff = head - tail;
+                let dx = diff.x.clamp(-1, 1);
+                let dy = diff.y.clamp(-1, 1);
+                self.knots[tail_idx] += (dx, dy);
+            }
+
+            debug_assert!(Self::obeys_touching_rule(head, self.knots[tail_idx]));
+        }
     }
 }
 
-pub fn part1(input: &Path) -> Result<(), Error> {
-    let mut rope = Rope::default();
-    let mut tail_visited = hashset!(rope.tail);
+fn solve(input: &Path, part: u32, num_knots: usize) -> Result<(), Error> {
+    let mut rope = Rope::new(num_knots);
+    let mut tail_visited = hashset!(rope.tail());
 
     for direction in parse::<Instruction>(input)?.flat_map(|instruction| {
         std::iter::repeat::<Direction>(instruction.direction.into()).take(instruction.qty)
     }) {
         rope.step(direction);
-        tail_visited.insert(rope.tail);
+        tail_visited.insert(rope.tail());
     }
 
-    println!("tail visited qty: {}", tail_visited.len());
+    println!("tail visited qty (pt. {part}): {}", tail_visited.len());
 
     Ok(())
 }
 
+pub fn part1(input: &Path) -> Result<(), Error> {
+    solve(input, 1, 2)
+}
+
 pub fn part2(input: &Path) -> Result<(), Error> {
-    unimplemented!("input file: {:?}", input)
+    solve(input, 2, 10)
 }
 
 #[derive(Debug, thiserror::Error)]
