@@ -1,6 +1,13 @@
-use aoclib::parse;
+use aoclib::{
+    geometry::{tile::Bool, Map, Point},
+    parse,
+};
 use parse_display::{Display, FromStr};
-use std::path::Path;
+use std::{
+    fmt,
+    ops::{Index, IndexMut},
+    path::Path,
+};
 
 #[derive(Debug)]
 struct Cpu {
@@ -91,6 +98,80 @@ fn filter_interesting<T>(iter: impl Iterator<Item = T>) -> impl Iterator<Item = 
         .map(|(_idx, value)| value)
 }
 
+struct Screen {
+    buffer: Map<Bool>,
+}
+
+impl Screen {
+    fn new() -> Self {
+        Screen {
+            buffer: Map::new(40, 6),
+        }
+    }
+
+    fn beam_position(&self, idx: usize) -> Point {
+        let width = self.buffer.width();
+
+        let y = idx / width;
+        let x = idx % width;
+        (x, y).into()
+    }
+}
+
+impl Index<usize> for Screen {
+    type Output = Bool;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        self.buffer.index(self.beam_position(index))
+    }
+}
+
+impl IndexMut<usize> for Screen {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        self.buffer.index_mut(self.beam_position(index))
+    }
+}
+
+struct VideoSystem {
+    cpu: Cpu,
+    screen: Screen,
+}
+
+impl VideoSystem {
+    fn new(program: Vec<Instruction>) -> Self {
+        Self {
+            cpu: Cpu::new(program),
+            screen: Screen::new(),
+        }
+    }
+
+    fn scan(&mut self) {
+        const SPRITE: [i32; 3] = [-1, 0, 1];
+        for (idx, x_register) in self
+            .cpu
+            .trace(|cpu| cpu.register)
+            // skip 1 because the first trace output comes from before cycle 1
+            .skip(1)
+            .enumerate()
+        {
+            let x = self.screen.beam_position(idx).x;
+            if SPRITE
+                .iter()
+                .map(|offset| offset + x_register)
+                .any(|sprite| sprite == x)
+            {
+                self.screen[idx] = true.into()
+            }
+        }
+    }
+}
+
+impl fmt::Display for VideoSystem {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.screen.buffer.flip_vertical().fmt(f)
+    }
+}
+
 pub fn part1(input: &Path) -> Result<(), Error> {
     let program: Vec<Instruction> = parse(input)?.collect();
     let mut cpu = Cpu::new(program);
@@ -104,7 +185,11 @@ pub fn part1(input: &Path) -> Result<(), Error> {
 }
 
 pub fn part2(input: &Path) -> Result<(), Error> {
-    unimplemented!("input file: {:?}", input)
+    let program: Vec<Instruction> = parse(input)?.collect();
+    let mut video_system = VideoSystem::new(program);
+    video_system.scan();
+    println!("video system shows:\n{video_system}");
+    Ok(())
 }
 
 #[derive(Debug, thiserror::Error)]
