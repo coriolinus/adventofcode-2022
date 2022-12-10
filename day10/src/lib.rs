@@ -46,14 +46,14 @@ impl Cpu {
         self.cycle_counter += 1;
     }
 
-    fn trace<'a, F, V>(&'a mut self, inspector: F) -> impl '_ + Iterator<Item = (i32, V)>
+    fn trace<'a, F, V>(&'a mut self, inspector: F) -> impl '_ + Iterator<Item = V>
     where
         F: 'a + Fn(&Self) -> V,
     {
         std::iter::from_fn(move || {
             (self.cycle_counter <= self.cycle_when_instruction_completes).then(|| {
                 // first get the return value, then tick
-                let return_value = (self.cycle_counter, inspector(self));
+                let return_value = inspector(self);
                 self.tick();
                 return_value
             })
@@ -83,12 +83,23 @@ impl Instruction {
     }
 }
 
+// pass through only those items with interesting indices in the stream
+fn filter_interesting<T>(iter: impl Iterator<Item = T>) -> impl Iterator<Item = T> {
+    const INTERESTING: [usize; 6] = [20, 60, 100, 140, 180, 220];
+    iter.enumerate()
+        .filter(|(idx, _value)| INTERESTING.contains(idx))
+        .map(|(_idx, value)| value)
+}
+
 pub fn part1(input: &Path) -> Result<(), Error> {
     let program: Vec<Instruction> = parse(input)?.collect();
     let mut cpu = Cpu::new(program);
-    for (cycle_counter, signal_strength) in cpu.trace(|cpu| cpu.register) {
-        println!("{cycle_counter}: {signal_strength}");
-    }
+    let signal_strength_sum: i32 =
+        filter_interesting(cpu.trace(|cpu| cpu.signal_strength()).enumerate())
+            .map(|(_idx, signal_strength)| signal_strength)
+            .sum();
+    println!("sum of signal strength: {signal_strength_sum}");
+
     Ok(())
 }
 
