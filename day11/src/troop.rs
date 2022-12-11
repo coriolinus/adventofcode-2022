@@ -9,24 +9,27 @@ macro_rules! trace_if_set {
     };
 }
 
-pub struct Troop(Vec<Monkey>);
+pub struct Troop {
+    monkeys: Vec<Monkey>,
+    part_one: bool,
+}
 
 impl Troop {
-    pub fn new(monkeys: Vec<Monkey>) -> Self {
-        Self(monkeys)
+    pub fn new(monkeys: Vec<Monkey>, part_one: bool) -> Self {
+        Self { monkeys, part_one }
     }
 
     fn turn_for(&mut self, monkey_idx: usize) {
         macro_rules! monkey {
             ($idx:expr) => {
-                self.0
+                self.monkeys
                     .get($idx)
                     .expect("only valid indices are ever requested")
             };
         }
         macro_rules! monkey_mut {
             ($idx:expr) => {
-                self.0
+                self.monkeys
                     .get_mut($idx)
                     .expect("only valid indices are ever requested")
             };
@@ -45,11 +48,15 @@ impl Troop {
             let monkey = monkey!(monkey_idx);
             item_worry = monkey.operation.perform(item_worry);
             trace_if_set!("MONKEY_TRACE", "    Worry level increases to {item_worry}.");
-            item_worry /= 3;
-            trace_if_set!(
-                "MONKEY_TRACE",
-                "    Monkey gets bored with item. Worry reduced to {item_worry}."
-            );
+
+            if self.part_one {
+                item_worry /= 3;
+                trace_if_set!(
+                    "MONKEY_TRACE",
+                    "    Monkey gets bored with item. Worry reduced to {item_worry}."
+                );
+            }
+
             let divisibility;
             let destination = if item_worry % monkey.test.divisible_by == 0 {
                 divisibility = "is";
@@ -72,13 +79,13 @@ impl Troop {
     }
 
     pub fn round(&mut self) {
-        for idx in 0..self.0.len() {
+        for idx in 0..self.monkeys.len() {
             self.turn_for(idx);
         }
     }
 
     pub fn active_monkeys(self, n: usize) -> Vec<Monkey> {
-        let mut monkeys = self.0;
+        let mut monkeys = self.monkeys;
         monkeys.sort_by_key(|monkey| std::cmp::Reverse(monkey.inspect_count));
         monkeys.truncate(n);
         monkeys

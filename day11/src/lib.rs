@@ -7,7 +7,7 @@ mod parse;
 mod troop;
 
 pub fn part1(input: &Path) -> Result<(), Error> {
-    let mut troop = Troop::new(parse::parse(input)?);
+    let mut troop = Troop::new(parse::parse(input)?, true);
     for _ in 0..20 {
         troop.round();
     }
@@ -21,7 +21,17 @@ pub fn part1(input: &Path) -> Result<(), Error> {
 }
 
 pub fn part2(input: &Path) -> Result<(), Error> {
-    unimplemented!("input file: {:?}", input)
+    let mut troop = Troop::new(parse::parse(input)?, false);
+    for _ in 0..20 {
+        troop.round();
+    }
+    let monkey_business: u32 = troop
+        .active_monkeys(2)
+        .into_iter()
+        .map(|monkey| monkey.inspect_count)
+        .product();
+    println!("monkey business: {monkey_business}");
+    Ok(())
 }
 
 #[derive(Debug, thiserror::Error)]
