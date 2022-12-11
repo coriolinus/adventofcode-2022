@@ -69,4 +69,6 @@ pub struct Monkey {
     pub test: Test,
     pub true_destination: MonkeyId,
     pub false_destination: MonkeyId,
+    #[builder(setter(skip))]
+    pub inspect_count: u32,
 }

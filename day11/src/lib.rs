@@ -1,13 +1,23 @@
 use std::path::Path;
 
+use crate::troop::Troop;
+
 mod models;
 mod parse;
 mod troop;
 
 pub fn part1(input: &Path) -> Result<(), Error> {
-    let monkeys = parse::parse(input)?;
-    println!("parsed {} monkeys", monkeys.len());
-    unimplemented!("input file: {:?}", input)
+    let mut troop = Troop::new(parse::parse(input)?);
+    for _ in 0..20 {
+        troop.round();
+    }
+    let monkey_business: u32 = troop
+        .active_monkeys(2)
+        .into_iter()
+        .map(|monkey| monkey.inspect_count)
+        .product();
+    println!("monkey business: {monkey_business}");
+    Ok(())
 }
 
 pub fn part2(input: &Path) -> Result<(), Error> {
