@@ -1,33 +1,13 @@
+use crate::env_is_set;
 use crate::models::Monkey;
 
-/// Produce trace output if the specified variable is non-empty in the environment
-macro_rules! trace_if_set {
-    ($key:expr, $format:literal $(, $arg:expr)*) => {
-        if !std::env::var($key).unwrap_or_default().is_empty() {
-            eprintln!($format, $($arg),*);
-        }
-    };
-}
-
-// Euclid's Algorithm
-fn greatest_common_denominator(mut a: u32, mut b: u32) -> u32 {
-    while b != 0 {
-        (a, b) = (b, a % b);
-    }
-    a
-}
-
-fn least_common_multiple(a: u32, b: u32) -> u32 {
-    a * b / greatest_common_denominator(a, b)
-}
-
-fn least_common_multiple_many(of: impl IntoIterator<Item = u32>) -> Option<u32> {
-    of.into_iter().reduce(least_common_multiple)
+fn least_common_multiple_many(of: impl IntoIterator<Item = u128>) -> Option<u128> {
+    of.into_iter().reduce(num_integer::lcm)
 }
 
 pub struct Troop {
     monkeys: Vec<Monkey>,
-    test_lcm: Option<u32>,
+    test_lcm: Option<u128>,
 }
 
 impl Troop {
@@ -37,6 +17,10 @@ impl Troop {
                 .unwrap_or(1)
         });
         Self { monkeys, test_lcm }
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &Monkey> {
+        self.monkeys.iter()
     }
 
     fn turn_for(&mut self, monkey_idx: usize) {
@@ -55,28 +39,30 @@ impl Troop {
             };
         }
 
-        trace_if_set!("MONKEY_TRACE", "Monkey {monkey_idx}:");
+        if env_is_set("MONKEY_TRACE") {
+            eprintln!("Monkey {monkey_idx}:");
+        }
 
         while let Some(mut item_worry) = monkey_mut!(monkey_idx).items.pop_front() {
             monkey_mut!(monkey_idx).inspect_count += 1;
 
-            trace_if_set!(
-                "MONKEY_TRACE",
-                "  Monkey inspects an item with a worry level of {item_worry}."
-            );
+            if env_is_set("MONKEY_TRACE") {
+                eprintln!("  Monkey inspects an item with a worry level of {item_worry}.");
+            }
 
             let monkey = monkey!(monkey_idx);
             item_worry = monkey.operation.perform(item_worry);
-            trace_if_set!("MONKEY_TRACE", "    Worry level increases to {item_worry}.");
+            if env_is_set("MONKEY_TRACE") {
+                eprintln!("    Worry level increases to {item_worry}.");
+            }
 
             if let Some(lcm) = self.test_lcm {
                 item_worry %= lcm;
             } else {
                 item_worry /= 3;
-                trace_if_set!(
-                    "MONKEY_TRACE",
-                    "    Monkey gets bored with item. Worry reduced to {item_worry}."
-                );
+                if env_is_set("MONKEY_TRACE") {
+                    eprintln!("    Monkey gets bored with item. Worry reduced to {item_worry}.");
+                }
             }
 
             let divisibility;
@@ -87,15 +73,15 @@ impl Troop {
                 divisibility = "is not";
                 monkey.false_destination.0
             };
-            trace_if_set!(
-                "MONKEY_TRACE",
-                "    Current worry level {divisibility} divisible by {}.",
-                monkey.test.divisible_by
-            );
-            trace_if_set!(
-                "MONKEY_TRACE",
-                "    Item with worry level {item_worry} is thrown to monkey {destination}."
-            );
+            if env_is_set("MONKEY_TRACE") {
+                eprintln!(
+                    "    Current worry level {divisibility} divisible by {}.",
+                    monkey.test.divisible_by
+                );
+                eprintln!(
+                    "    Item with worry level {item_worry} is thrown to monkey {destination}."
+                );
+            }
             monkey_mut!(destination).items.push_back(item_worry);
         }
     }

@@ -34,7 +34,7 @@ impl Arithmetic {
 pub enum Operand {
     Old,
     #[display("{0}")]
-    Value(u32),
+    Value(u128),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, FromStr, Display)]
@@ -45,7 +45,7 @@ pub struct Operation {
 }
 
 impl Operation {
-    pub fn perform(self, value: u32) -> u32 {
+    pub fn perform(self, value: u128) -> u128 {
         let operand_value = match self.operand {
             Operand::Old => value,
             Operand::Value(v) => v,
@@ -57,14 +57,14 @@ impl Operation {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, FromStr, Display)]
 #[display("Test: divisible by {divisible_by}")]
 pub struct Test {
-    pub divisible_by: u32,
+    pub divisible_by: u128,
 }
 
 #[derive(Debug, Builder)]
 #[builder(pattern = "owned")]
 pub struct Monkey {
     pub id: MonkeyId,
-    pub items: VecDeque<u32>,
+    pub items: VecDeque<u128>,
     pub operation: Operation,
     pub test: Test,
     pub true_destination: MonkeyId,

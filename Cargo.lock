@@ -476,6 +476,7 @@ dependencies = [
  "aoclib",
  "color-eyre",
  "derive_builder",
+ "num-integer",
  "parse-display 0.7.0",
  "structopt",
  "thiserror",
