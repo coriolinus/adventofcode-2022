@@ -9,14 +9,34 @@ macro_rules! trace_if_set {
     };
 }
 
+// Euclid's Algorithm
+fn greatest_common_denominator(mut a: u32, mut b: u32) -> u32 {
+    while b != 0 {
+        (a, b) = (b, a % b);
+    }
+    a
+}
+
+fn least_common_multiple(a: u32, b: u32) -> u32 {
+    a * b / greatest_common_denominator(a, b)
+}
+
+fn least_common_multiple_many(of: impl IntoIterator<Item = u32>) -> Option<u32> {
+    of.into_iter().reduce(least_common_multiple)
+}
+
 pub struct Troop {
     monkeys: Vec<Monkey>,
-    part_one: bool,
+    test_lcm: Option<u32>,
 }
 
 impl Troop {
     pub fn new(monkeys: Vec<Monkey>, part_one: bool) -> Self {
-        Self { monkeys, part_one }
+        let test_lcm = (!part_one).then(|| {
+            least_common_multiple_many(monkeys.iter().map(|monkey| monkey.test.divisible_by))
+                .unwrap_or(1)
+        });
+        Self { monkeys, test_lcm }
     }
 
     fn turn_for(&mut self, monkey_idx: usize) {
@@ -49,7 +69,9 @@ impl Troop {
             item_worry = monkey.operation.perform(item_worry);
             trace_if_set!("MONKEY_TRACE", "    Worry level increases to {item_worry}.");
 
-            if self.part_one {
+            if let Some(lcm) = self.test_lcm {
+                item_worry %= lcm;
+            } else {
                 item_worry /= 3;
                 trace_if_set!(
                     "MONKEY_TRACE",
