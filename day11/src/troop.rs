@@ -1,13 +1,13 @@
 use crate::env_is_set;
 use crate::models::Monkey;
 
-fn least_common_multiple_many(of: impl IntoIterator<Item = u128>) -> Option<u128> {
+fn least_common_multiple_many(of: impl IntoIterator<Item = u64>) -> Option<u64> {
     of.into_iter().reduce(num_integer::lcm)
 }
 
 pub struct Troop {
     monkeys: Vec<Monkey>,
-    test_lcm: Option<u128>,
+    test_lcm: Option<u64>,
 }
 
 impl Troop {

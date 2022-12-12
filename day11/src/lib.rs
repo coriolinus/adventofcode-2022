@@ -47,10 +47,10 @@ pub fn part2(input: &Path) -> Result<(), Error> {
             );
         }
     }
-    let monkey_business: u128 = troop
+    let monkey_business: u64 = troop
         .active_monkeys(2)
         .into_iter()
-        .map(|monkey| monkey.inspect_count as u128)
+        .map(|monkey| monkey.inspect_count as u64)
         .product();
     println!("monkey business (pt. 2): {monkey_business}");
     Ok(())

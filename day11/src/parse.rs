@@ -72,7 +72,7 @@ pub fn parse(input: &Path) -> Result<Vec<Monkey>, Error> {
             InputLine::StartingItems(items_str) => {
                 let mut items = VecDeque::new();
                 for substr in items_str.split(',') {
-                    let item: u128 = substr.trim().parse().map_err(|_| {
+                    let item: u64 = substr.trim().parse().map_err(|_| {
                         std::io::Error::new(
                             std::io::ErrorKind::Other,
                             "could not parse monkey items",
