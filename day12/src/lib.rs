@@ -2,6 +2,7 @@ mod elevation;
 mod height_map;
 mod path_node;
 
+use aoclib::geometry::Point;
 use height_map::HeightMap;
 use path_node::PathNode;
 
@@ -11,16 +12,21 @@ use std::{
     rc::Rc,
 };
 
-fn find_path_to_destination(map: &HeightMap) -> Option<Rc<PathNode>> {
+fn find_path(
+    map: &HeightMap,
+    initial: Point,
+    is_goal: impl Fn(&Rc<PathNode>) -> bool,
+    can_step: impl Fn(Point, Point) -> bool,
+) -> Option<Rc<PathNode>> {
     let mut visited = HashSet::new();
     let mut queue = VecDeque::new();
     queue.push_back(Rc::new(PathNode {
-        location: map.start,
+        location: initial,
         prev: None,
     }));
 
     while let Some(node) = queue.pop_front() {
-        if node.location == map.target {
+        if is_goal(&node) {
             return Some(node);
         }
 
@@ -34,8 +40,8 @@ fn find_path_to_destination(map: &HeightMap) -> Option<Rc<PathNode>> {
                 .filter(|&location| {
                     // we can't travel diagonally
                     (location - node.location).manhattan() == 1
-                        // we can't climb more than one step at a time
-                        && map[location] <= map[node.location] + 1
+                        // external rules about how we can step
+                        && can_step(node.location, location)
                         // we don't want to go backwards
                         && !visited.contains(&location)
                 })
@@ -51,45 +57,22 @@ fn find_path_to_destination(map: &HeightMap) -> Option<Rc<PathNode>> {
     None
 }
 
+fn find_path_to_destination(map: &HeightMap) -> Option<Rc<PathNode>> {
+    find_path(
+        map,
+        map.start,
+        |node| node.location == map.target,
+        |from, to| map[to] <= map[from] + 1,
+    )
+}
+
 fn find_shortest_hiking_path(map: &HeightMap) -> Option<Rc<PathNode>> {
-    let mut visited = HashSet::new();
-    let mut queue = VecDeque::new();
-    queue.push_back(Rc::new(PathNode {
-        location: map.target,
-        prev: None,
-    }));
-
-    while let Some(node) = queue.pop_front() {
-        // first instance of a location at height 0 gets returned
-        if map[node.location] == 0 {
-            return Some(node);
-        }
-
-        if !visited.insert(node.location) {
-            // we've already visited this location
-            continue;
-        }
-
-        queue.extend(
-            map.adjacencies(node.location)
-                .filter(|&location| {
-                    // we can't travel diagonally
-                    (location - node.location).manhattan() == 1
-                        // we can't descend more than one step at a time
-                        && map[location] >= map[node.location] - 1
-                        // we don't want to go backwards
-                        && !visited.contains(&location)
-                })
-                .map(|location| {
-                    Rc::new(PathNode {
-                        location,
-                        prev: Some(node.clone()),
-                    })
-                }),
-        )
-    }
-
-    None
+    find_path(
+        map,
+        map.target,
+        |node| map[node.location] == 0,
+        |from, to| map[to] >= map[from] - 1,
+    )
 }
 
 // wrong, too low: 374
