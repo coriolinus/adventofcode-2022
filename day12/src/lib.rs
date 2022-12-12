@@ -57,44 +57,41 @@ fn find_path(
     None
 }
 
-fn find_path_to_destination(map: &HeightMap) -> Option<Rc<PathNode>> {
-    find_path(
-        map,
-        map.start,
-        |node| node.location == map.target,
-        |from, to| map[to] <= map[from] + 1,
-    )
-}
-
-fn find_shortest_hiking_path(map: &HeightMap) -> Option<Rc<PathNode>> {
-    find_path(
-        map,
-        map.target,
-        |node| map[node.location] == 0,
-        |from, to| map[to] >= map[from] - 1,
-    )
+fn solve(
+    input: &Path,
+    display: &str,
+    find_path: impl Fn(&HeightMap) -> Option<Rc<PathNode>>,
+) -> Result<(), Error> {
+    let map = HeightMap::new(input)?;
+    let path_to_destination = find_path(&map).ok_or(Error::NoSolution)?;
+    let node_count = path_to_destination.iter().count();
+    // we can't parse a map on which the start and target positions are identical, so we know that there
+    // are at least two nodes in every correct solution.
+    let step_count = node_count - 1;
+    println!("{display}: {step_count}");
+    Ok(())
 }
 
 pub fn part1(input: &Path) -> Result<(), Error> {
-    let map = HeightMap::new(input)?;
-    let path_to_destination = find_path_to_destination(&map).ok_or(Error::NoSolution)?;
-    let node_count = path_to_destination.iter().count();
-    // we can't parse a map on which the start and target positions are identical, so we know that there
-    // are at least two nodes in every correct solution.
-    let step_count = node_count - 1;
-    println!("steps in shortest path: {step_count}");
-    Ok(())
+    solve(input, "1: steps in shortest path", |map| {
+        find_path(
+            map,
+            map.start,
+            |node| node.location == map.target,
+            |from, to| map[to] <= map[from] + 1,
+        )
+    })
 }
 
 pub fn part2(input: &Path) -> Result<(), Error> {
-    let map = HeightMap::new(input)?;
-    let path_to_destination = find_shortest_hiking_path(&map).ok_or(Error::NoSolution)?;
-    let node_count = path_to_destination.iter().count();
-    // we can't parse a map on which the start and target positions are identical, so we know that there
-    // are at least two nodes in every correct solution.
-    let step_count = node_count - 1;
-    println!("steps in shortest possible path: {step_count}");
-    Ok(())
+    solve(input, "2: steps in shortest possible path", |map| {
+        find_path(
+            map,
+            map.target,
+            |node| map[node.location] == 0,
+            |from, to| map[to] >= map[from] - 1,
+        )
+    })
 }
 
 #[derive(Debug, thiserror::Error)]
