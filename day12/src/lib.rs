@@ -75,7 +75,6 @@ fn find_shortest_hiking_path(map: &HeightMap) -> Option<Rc<PathNode>> {
     )
 }
 
-// wrong, too low: 374
 pub fn part1(input: &Path) -> Result<(), Error> {
     let map = HeightMap::new(input)?;
     let path_to_destination = find_path_to_destination(&map).ok_or(Error::NoSolution)?;
