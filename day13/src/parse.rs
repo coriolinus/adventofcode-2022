@@ -30,14 +30,13 @@ impl Integer {
 }
 
 impl List {
-    fn parse(mut s: &str) -> Result<(Self, &str), ParseError> {
+    fn parse(s: &str) -> Result<(Self, &str), ParseError> {
         if s.is_empty() {
             return Err(ParseError::TooShort);
         }
-        if !s.starts_with('[') {
+        let Some(mut s) = s.strip_prefix('[') else {
             return Err(ParseError::UnexpectedToken);
-        }
-        s = &s[1..];
+        };
 
         let mut inner = Vec::new();
         if let Some(rest) = s.strip_prefix(']') {
