@@ -493,6 +493,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "day13"
+version = "0.1.0"
+dependencies = [
+ "aoclib",
+ "color-eyre",
+ "derive_more",
+ "rstest",
+ "structopt",
+ "thiserror",
+]
+
+[[package]]
 name = "derive_builder"
 version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
