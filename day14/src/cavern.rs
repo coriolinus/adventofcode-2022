@@ -33,7 +33,7 @@ fn find_boundaries(points: impl IntoIterator<Item = Point>) -> Option<(Point, Po
 }
 
 pub struct Cavern {
-    map: Map<Tile>,
+    pub map: Map<Tile>,
 }
 
 impl Cavern {
@@ -84,6 +84,29 @@ impl Cavern {
         }
 
         Ok(Self { map })
+    }
+
+    // Add a floor at two plus the highest y coordinate
+    pub fn add_floor(&mut self) {
+        let height = self.map.height() + 2;
+        let min_x = SAND_SOURCE.x as usize - height + 1;
+        let width = 2 * height - 1;
+
+        let mut new_map =
+            Map::new_offset(Point::new(min_x as i32, self.map.low_y()), width, height);
+
+        // copy the existing map data
+        for (location, tile) in self.map.iter() {
+            new_map[location] = *tile;
+        }
+
+        // add a floor along the bottom row
+        // remember that our map is vertically flipped from the AoC map
+        for location in new_map.project(new_map.top_left(), 1, 0) {
+            new_map[location] = Tile::Rock;
+        }
+
+        self.map = new_map
     }
 
     /// Drop a single unit of sand. Return whether or not it came to rest.
