@@ -48,10 +48,13 @@ impl Cavern {
         )
         .ok_or(Error::BadInput("no path nodes"))?;
 
-        // note that we add 1 to the width and height to ensure that we capture all relevant information
+        // we're going to move the offset left by 1 to ensure there's a blank space for sand to fall
+        let min = Point::new(min.x - 1, min.y);
+
+        // note that we add to the width and height to ensure that we capture all relevant information
         let mut map = Map::new_offset(
             min,
-            (max.x - min.x) as usize + 1,
+            (max.x - min.x) as usize + 3,
             (max.y - min.y) as usize + 1,
         );
 
@@ -81,6 +84,43 @@ impl Cavern {
         }
 
         Ok(Self { map })
+    }
+
+    /// Drop a single unit of sand. Return whether or not it came to rest.
+    pub fn drop_sand(&mut self) -> bool {
+        let mut sand = SAND_SOURCE;
+
+        loop {
+            let prev_position = sand;
+
+            for deltas in [
+                // straight down
+                (0, 1),
+                // down and to the left
+                (-1, 1),
+                // down and do the right
+                (1, 1),
+            ] {
+                let dest = sand + deltas;
+                if self.map.in_bounds(dest) && !self.map[dest].is_blocked() {
+                    sand += deltas;
+                    break;
+                }
+            }
+
+            if sand == prev_position {
+                break;
+            }
+        }
+
+        // we have to add 1 to the sand y position to properly check whether
+        // we're in the bottom row. If we are in fact in the bottom row, then
+        // we've fallen into the abyss.
+        let came_to_rest = sand.y as usize + 1 != self.map.height();
+        if came_to_rest {
+            self.map[sand] = Tile::Sand;
+        }
+        came_to_rest
     }
 }
 

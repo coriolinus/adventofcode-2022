@@ -9,8 +9,15 @@ use std::path::Path;
 pub const SAND_SOURCE: Point = Point::new(500, 0);
 
 pub fn part1(input: &Path) -> Result<(), Error> {
-    let cavern = Cavern::parse(input)?;
-    println!("{cavern}");
+    let mut cavern = Cavern::parse(input)?;
+
+    let mut came_to_rest = 0;
+    while cavern.drop_sand() {
+        came_to_rest += 1;
+    }
+
+    println!("{came_to_rest} units of sand came to rest");
+
     Ok(())
 }
 

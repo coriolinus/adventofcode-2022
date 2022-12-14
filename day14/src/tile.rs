@@ -25,3 +25,12 @@ impl ToRgb for Tile {
         }
     }
 }
+
+impl Tile {
+    pub fn is_blocked(self) -> bool {
+        match self {
+            Tile::Air => false,
+            Tile::Sand | Tile::Rock => true,
+        }
+    }
+}
