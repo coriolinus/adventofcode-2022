@@ -9,8 +9,13 @@ aoclib = { git = "https://github.com/coriolinus/aoclib.git" }
 color-eyre = "0.5.10"
 num-traits = "0.2.15"
 parse-display = "0.7.0"
+rayon = { version = "1.6.1", optional = true }
 structopt = "0.3.21"
 thiserror = "1.0.22"
 
 [dev-dependencies]
 rstest = "0.16.0"
+
+[features]
+default = ["parallelism"]
+parallelism = ["rayon"]

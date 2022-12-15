@@ -87,17 +87,26 @@ pub fn part2(input: &Path) -> Result<(), Error> {
 
     let reports = parse::<Report>(input)?.collect::<Vec<_>>();
 
-    let (x, y) = bounds
-        .clone()
-        .find_map(|row| {
-            let excluded = merge_ranges(
-                reports
-                    .iter()
-                    .filter_map(|report| report.impossible_positions_at_row(row)),
-            );
-            find_excluded(&bounds, &excluded).map(|column| (column as u64, row as u64))
-        })
-        .ok_or(Error::NoSolution)?;
+    let find_xy = |row| {
+        let excluded = merge_ranges(
+            reports
+                .iter()
+                .filter_map(|report| report.impossible_positions_at_row(row)),
+        );
+        find_excluded(&bounds, &excluded).map(|column| (column as u64, row as u64))
+    };
+
+    #[cfg(feature = "parallelism")]
+    let (x, y) = {
+        use rayon::prelude::*;
+        bounds
+            .clone()
+            .into_par_iter()
+            .find_map_any(find_xy)
+            .ok_or(Error::NoSolution)?
+    };
+    #[cfg(not(feature = "parallelism"))]
+    let (x, y) = bounds.clone().find_map(find_xy).ok_or(Error::NoSolution)?;
 
     let tuning_frequency = x * 4000000 + y;
     println!("tuning frequency: {tuning_frequency}");

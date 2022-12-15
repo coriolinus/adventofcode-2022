@@ -57,7 +57,6 @@ where
 }
 
 /// `true` when this slice of ranges is sorted by low bound
-#[cfg(debug_assertions)]
 fn is_sorted<T>(ranges: &[RangeInclusive<T>]) -> bool
 where
     T: Copy + PartialOrd,
@@ -82,7 +81,6 @@ where
 }
 
 /// `true` if there is no pair of adjacent ranges which overlap
-#[cfg(debug_assertions)]
 fn no_overlaps<T>(ranges: &[RangeInclusive<T>]) -> bool
 where
     T: Copy + PartialOrd,
