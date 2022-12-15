@@ -1,0 +1,15 @@
+[package]
+name = "day15"
+version = "0.1.0"
+authors = ["Peter Goodspeed-Niklaus <peter.r.goodspeedniklaus@gmail.com>"]
+edition = "2021"
+
+[dependencies]
+aoclib = { git = "https://github.com/coriolinus/aoclib.git" }
+color-eyre = "0.5.10"
+parse-display = "0.7.0"
+structopt = "0.3.21"
+thiserror = "1.0.22"
+
+[dev-dependencies]
+rstest = "0.16.0"
