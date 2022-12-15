@@ -1,7 +1,10 @@
 use std::{
     borrow::Borrow,
-    ops::{RangeInclusive, Sub},
+    fmt,
+    ops::{Add, RangeInclusive, Sub},
 };
+
+use num_traits::One;
 
 /// How many points are contained within the bounds of this range.
 pub fn contained_points<T>(range: RangeInclusive<T>) -> u64
@@ -177,6 +180,41 @@ where
     debug_assert!(no_overlaps(&ranges), "range boundaries overlap");
 
     ranges
+}
+
+/// Find the single point which is inside `bounds` but outside of any of `impossible`.
+///
+/// `impossible` should be sorted and non-overlapping.
+pub fn find_excluded<T>(bounds: &RangeInclusive<T>, impossible: &[RangeInclusive<T>]) -> Option<T>
+where
+    T: Copy + Ord + One + Add<Output = T> + fmt::Display,
+{
+    debug_assert!(is_sorted(impossible));
+    debug_assert!(no_overlaps(impossible));
+
+    let mut found = Vec::with_capacity(4);
+    let mut cursor = low(bounds);
+
+    for range in impossible {
+        if !bounds.contains(&cursor) {
+            // we've exhausted the set of these bounds
+            break;
+        }
+        if range.contains(&cursor) {
+            cursor = high(range) + T::one();
+        } else if low(range) == cursor + T::one() {
+            found.push(cursor);
+            cursor = high(range);
+        } else {
+            eprintln!("found an empty range: {cursor}..{}", low(range));
+            return None;
+        }
+    }
+
+    if found.len() > 1 {
+        eprintln!("found several points outside the ranges");
+    }
+    (found.len() == 1).then(|| found[0])
 }
 
 #[cfg(test)]

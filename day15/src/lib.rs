@@ -4,7 +4,7 @@ use aoclib::{geometry::Point, parse};
 use parse_display::{Display, FromStr};
 use std::{collections::HashSet, ops::RangeInclusive, path::Path};
 
-use crate::range::{contained_points, merge_ranges};
+use crate::range::{contained_points, find_excluded, merge_ranges};
 
 #[derive(Default, Clone, Copy, Display, FromStr)]
 #[display("Sensor at x={sensor.x}, y={sensor.y}: closest beacon is at x={beacon.x}, y={beacon.y}")]
@@ -76,7 +76,34 @@ pub fn part1(input: &Path) -> Result<(), Error> {
 }
 
 pub fn part2(input: &Path) -> Result<(), Error> {
-    unimplemented!("input file: {:?}", input)
+    const UPPER_BOUND: i32 = 4_000_000;
+
+    let upper_bound = std::env::var("UPPER_BOUND")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(UPPER_BOUND);
+
+    let bounds = 0..=upper_bound;
+
+    let reports = parse::<Report>(input)?.collect::<Vec<_>>();
+
+    let (x, y) = bounds
+        .clone()
+        .find_map(|row| {
+            let excluded = merge_ranges(
+                reports
+                    .iter()
+                    .filter_map(|report| report.impossible_positions_at_row(row)),
+            );
+            find_excluded(&bounds, &excluded).map(|column| (column as u64, row as u64))
+        })
+        .ok_or(Error::NoSolution)?;
+
+    let tuning_frequency = x * 4000000 + y;
+    println!("tuning frequency: {tuning_frequency}");
+    println!("  at ({x}, {y})");
+
+    Ok(())
 }
 
 #[derive(Debug, thiserror::Error)]

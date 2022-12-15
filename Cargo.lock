@@ -529,6 +529,7 @@ version = "0.1.0"
 dependencies = [
  "aoclib",
  "color-eyre",
+ "num-traits",
  "parse-display 0.7.0",
  "rstest",
  "structopt",
