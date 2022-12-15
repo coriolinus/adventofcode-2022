@@ -2,7 +2,7 @@ mod range;
 
 use aoclib::{geometry::Point, parse};
 use parse_display::{Display, FromStr};
-use std::{ops::RangeInclusive, path::Path};
+use std::{collections::HashSet, ops::RangeInclusive, path::Path};
 
 use crate::range::{contained_points, merge_ranges};
 
@@ -38,19 +38,40 @@ impl Report {
     }
 }
 
-// wrong: too high: 4748136
-//                  4748136
 pub fn part1(input: &Path) -> Result<(), Error> {
     const ROW: i32 = 2_000_000;
+    let row = std::env::var("ROW")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(ROW);
 
-    let impossible_count: u64 = merge_ranges(
-        parse::<Report>(input)?.filter_map(|report| report.impossible_positions_at_row(ROW)),
+    let reports = parse::<Report>(input)?.collect::<Vec<_>>();
+
+    let range_count: u64 = merge_ranges(
+        reports
+            .iter()
+            .filter_map(|report| report.impossible_positions_at_row(row)),
     )
     .into_iter()
     .map(contained_points)
     .sum();
 
-    println!("{impossible_count} impossible positions at y={ROW}");
+    let sensors = reports
+        .iter()
+        .filter_map(|report| (report.sensor.y == row).then_some(report.sensor.x))
+        .collect::<HashSet<_>>();
+    let sensor_count = sensors.len() as u64;
+
+    let beacons = reports
+        .iter()
+        .filter_map(|report| (report.beacon.y == row).then_some(report.beacon.x))
+        .collect::<HashSet<_>>();
+    let beacon_count = beacons.len() as u64;
+
+    let impossible_count = range_count - sensor_count - beacon_count;
+
+    println!("{impossible_count} impossible positions at y={row}");
+    println!("  (range {range_count} - {sensor_count} sensors - {beacon_count} beacons)");
     Ok(())
 }
 
