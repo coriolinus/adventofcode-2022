@@ -8,4 +8,4 @@ edition = "2021"
 aoclib = { git = "https://github.com/coriolinus/aoclib.git" }
 color-eyre = "0.6.2"
 structopt = "0.3.26"
-thiserror = "1.0.40"
+thiserror = "1.0.50"

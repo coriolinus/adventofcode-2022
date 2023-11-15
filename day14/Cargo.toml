@@ -7,6 +7,6 @@ edition = "2021"
 [dependencies]
 aoclib = { git = "https://github.com/coriolinus/aoclib.git", features=["map-render"] }
 color-eyre = "0.6.2"
-parse-display = "0.8.0"
+parse-display = "0.8.2"
 structopt = "0.3.26"
-thiserror = "1.0.40"
+thiserror = "1.0.50"

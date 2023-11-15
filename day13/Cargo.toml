@@ -9,7 +9,7 @@ aoclib = { git = "https://github.com/coriolinus/aoclib.git" }
 color-eyre = "0.6.2"
 derive_more = "0.99.17"
 structopt = "0.3.26"
-thiserror = "1.0.40"
+thiserror = "1.0.50"
 
 [dev-dependencies]
-rstest = "0.17.0"
+rstest = "0.18.2"
